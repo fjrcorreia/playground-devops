@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>pt.factsandit.devops</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+
+    <artifactId>application</artifactId>
+    <packaging>jar</packaging>
+
+    <name>DevOps :: SpringBoot application</name>
+
+    <description>
+Demo Spring boot Application
+This application is intented to have two
+or more lines in its description
+
+Do not attempt to get any useful information
+from this description
+    </description>
+
+
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+
+    <profiles>
+        <profile>
+            <id>package</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>rpm-maven-plugin</artifactId>
+
+                        <configuration>
+                            <requires>
+                                <require>supervisor &gt;= 3.1.0</require>
+                                <require>jre &gt;= 1.8.0</require>
+                            </requires>
+
+                            <changelogFile>changelog</changelogFile>
+
+                            <defineStatements>
+                                <defineStatement>_unpackaged_files_terminate_build 0</defineStatement>
+                            </defineStatements>
+
+                            <mappings>
+                                <mapping>
+                                    <!-- Some Binaries -->
+                                    <directory>${package.prefix}/bin</directory>
+                                    <sources>
+                                        <source>
+                                            <location>bin</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+
+                                <mapping>
+                                    <!-- Application Configuration -->
+                                    <directory>${package.prefix}/conf</directory>
+                                    <configuration>true</configuration>
+                                    <sources>
+                                        <source>
+                                            <location>build/application.conf.sample</location>
+                                            <destination>application.conf</destination>
+                                        </source>
+                                    </sources>
+                                </mapping>
+
+                                <mapping>
+                                    <!-- Documentation Configuration -->
+                                    <directory>${package.prefix}/doc</directory>
+                                    <sources>
+                                        <source>
+                                            <location>build</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+
+
+                                <mapping>
+                                    <!-- Store Project Libraries -->
+                                    <directory>${package.prefix}/lib</directory>
+                                    <sources>
+                                        <source>
+                                            <location>
+                                                ${project.build.directory}/${project.artifactId}-${project.version}.jar
+                                            </location>
+                                        </source>
+
+                                        <!-- Simbolic Link to name to abstract version -->
+                                        <softlinkSource>
+                                            <location>${project.artifactId}-${project.version}.jar</location>
+                                            <destination>${project.artifactId}.jar</destination>
+                                        </softlinkSource>
+                                    </sources>
+                                </mapping>
+
+                                <mapping>
+                                    <!-- Logging directory -->
+                                    <directory>/var/log/devops</directory>
+                                </mapping>
+
+                                <mapping>
+                                    <!-- System :: Supervisor Configuration -->
+                                    <directory>/etc/supervisord.d/</directory>
+                                    <configuration>true</configuration>
+                                    <directoryIncluded>false</directoryIncluded>
+                                    <sources>
+                                        <source>
+                                            <location>build/supervisor.ini.sample</location>
+                                            <destination>devops-application.ini</destination>
+                                        </source>
+                                    </sources>
+                                </mapping>
+
+                            </mappings>
+                            <preinstallScriptlet>
+                                <script>
+/usr/bin/getent group ${package.group} &gt; /dev/null \
+    || /usr/sbin/groupadd -r ${package.group}
+/usr/bin/getent passwd ${package.user} &gt; /dev/null \
+    || /usr/sbin/useradd -g ${package.group} -r -M -s /sbin/nologin ${package.user}
+                                </script>
+                            </preinstallScriptlet>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
